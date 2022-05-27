@@ -1,0 +1,50 @@
+use Prelude;
+
+program Sieve;
+
+type PrimeFlagIndex = 2..max;
+
+type PrimeFlagArray = Array[PrimeFlagIndex] of Boolean
+begin
+    public function new: PrimeFlagArray 
+    begin
+        result := Array[PrimeFlagIndex].initialized_with(false);
+    end
+ 
+    public function set_not_prime(mutable self, const number: PrimeFlagIndex) 
+    begin
+        self[number] := false
+    end
+
+    public function is_prime(const self, const number: PrimeFlagIndex): Boolean 
+    begin
+        result := self[number];
+    end
+end
+
+
+function sieve
+begin
+    var prime_flags: PrimeFlagArray := PrimeFlagArray.new;
+
+    for const i in Low(PrimeFlagIndex) to High(PrimeFlagIndex) div 2 do
+        if prime_flags.is_prime(i) then
+            for const j in (2 * i) to High(PrimeFlagIndex) step i do
+                prime_flags.set_not_prime(j);
+
+    writeln;
+
+    var j : Integer := 0;
+    for const i in prime_flags.indices do
+        if prime_flags.is_prime(i) then begin
+            i.write(width: 7);
+            j.inc;
+            if (j mod 10) = 0 then
+                writeln;
+        end
+
+    writeln;
+end 
+
+write('Calculating the Prime Numbers from ', Low(PrimeFlagIndex), ' to ', High(PrimeFlagIndex), '...');
+sieve;
