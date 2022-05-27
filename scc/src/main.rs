@@ -1,11 +1,20 @@
+use std::path::PathBuf;
+
+use clap::Parser;
 use sierra_parser::lexer::*;
 
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+pub struct CommandLineArguments {
+    input_file: PathBuf,
+}
+
 fn main() {
-    let mut lexer = Lexer::new("test 93 test34 444_44_44");
+    let args = CommandLineArguments::parse();
 
-    for i in lexer.lex() {
-        print!("{i:?}");
-    }
+    let text = std::fs::read_to_string(args.input_file).expect("Could not read file");
 
-    println!();
+    let mut lexer = Lexer::new(text);
+
+    println!("{:?}", lexer.lex());
 }

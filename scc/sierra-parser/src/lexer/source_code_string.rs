@@ -1,4 +1,8 @@
+use std::error::Error;
+
 use super::source_code_text::SourceCodeText;
+
+type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub struct SourceCodeString {
     code: String,
@@ -15,12 +19,17 @@ impl SourceCodeString {
 }
 
 impl SourceCodeText for SourceCodeString {
-    fn peek(&self) -> Option<char> {
-        self.code.chars().nth(self.current)
+    fn peek(&self) -> Result<char> {
+        if let Some(c) = self.code.chars().nth(self.current) {
+            Ok(c)
+        } else {
+            Err("EndOfFile".into())
+        }
     }
 
-    fn pop(&mut self) -> Option<char> {
+    fn pop(&mut self) -> Result<char> {
+        let c = self.peek();
         self.current += 1;
-        self.code.chars().nth(self.current-1)
+        c
     }
 }

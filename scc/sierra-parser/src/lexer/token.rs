@@ -74,5 +74,8 @@ pub enum Token {
     Colon,
     Dot,
 
+    Assignment,
+    Equals,
+
     EndOfFile,
 }
