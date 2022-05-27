@@ -3,8 +3,8 @@ use Prelude;
 program Sieve;
 
 type PrimeFlagIndex = 2..max;
-
 type PrimeFlagArray = Array[PrimeFlagIndex] of Boolean
+
 begin
     public function new: PrimeFlagArray 
     begin
