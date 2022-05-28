@@ -1,8 +1,6 @@
-use std::error::Error;
+use crate::Result;
 
 use super::source_code_text::SourceCodeText;
-
-type Result<T> = std::result::Result<T, Box<dyn Error>>;
 
 pub struct SourceCodeString {
     code: String,

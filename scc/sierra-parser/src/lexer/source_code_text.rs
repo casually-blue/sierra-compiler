@@ -1,8 +1,6 @@
-use std::error::Error;
+use crate::Result;
 
 use super::source_code_string::SourceCodeString;
-
-type Result<T> = core::result::Result<T, Box<dyn Error>>;
 
 pub trait SourceCodeText {
     fn peek(&self) -> Result<char>;

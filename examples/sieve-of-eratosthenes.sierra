@@ -2,10 +2,9 @@ use Prelude;
 
 program Sieve;
 
-type PrimeFlagIndex = 2..max;
-type PrimeFlagArray = Array[PrimeFlagIndex] of Boolean
-
-begin
+type PrimeFlagIndex = 2..10000;
+type PrimeFlagArray = Array[PrimeFlagIndex] of Boolean;
+implementation PrimeFlagArray 
     public function new: PrimeFlagArray 
     begin
         result := Array[PrimeFlagIndex].initialized_with(false);
@@ -44,7 +43,7 @@ begin
         end
 
     writeln;
-end 
+end
 
 write('Calculating the Prime Numbers from ', Low(PrimeFlagIndex), ' to ', High(PrimeFlagIndex), '...');
 sieve;

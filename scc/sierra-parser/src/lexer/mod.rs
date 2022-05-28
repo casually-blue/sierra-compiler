@@ -1,12 +1,12 @@
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, collections::VecDeque};
+
+use crate::Result;
 
 use self::{token::{Token, Literal, ErrorToken, Keyword}, source_code_text::SourceCodeText};
 
 pub mod token;
 pub mod source_code_string;
 pub mod source_code_text;
-
-pub type LexerResult = Result<Token, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub enum LexerError {
@@ -21,6 +21,50 @@ impl Display for LexerError {
         match self {
             EndOfCode => write!(f, "Unexpected end of file"),
             UnexpectedEscapeSequence(c) => write!(f, "Expected escape sequence, got \\{c}")
+        }
+    }
+}
+
+pub struct StreamLexer {
+    lexer: Lexer, 
+    token_lookahead: VecDeque<Token>,
+}
+
+impl StreamLexer {
+    pub fn new(code: impl Into<Box<dyn SourceCodeText>>) -> Self {
+        StreamLexer {
+            lexer: Lexer::new(code.into()),
+            token_lookahead: VecDeque::new()
+        }
+    }
+
+    pub fn peek(&mut self, lookahead: Option<usize>) -> Result<Token> {
+        let lookahead = if let Some(n) = lookahead {
+            n
+        } else {
+            1
+        };
+
+        if lookahead > self.token_lookahead.len() {
+            for _ in self.token_lookahead.len()..lookahead {
+                let token = self.lexer.next_token();
+                if let Ok(token) = token {
+                    self.token_lookahead.push_back(token)
+                }  else {
+                    return token;
+                }
+                self.token_lookahead.push_back(self.lexer.next_token()?);
+            }
+        }
+
+        Ok(self.token_lookahead.get(lookahead-1).unwrap().clone())
+    }
+
+    pub fn pop(&mut self) -> Result<Token> {
+        if !self.token_lookahead.is_empty() {
+            Ok(self.token_lookahead.pop_front().unwrap())
+        } else {
+            self.lexer.next_token()
         }
     }
 }
@@ -46,12 +90,12 @@ impl Lexer {
         tokens
     }
 
-    pub fn single_character(&mut self, constructor: fn() -> Token) -> LexerResult {
+    pub fn single_character(&mut self, constructor: fn() -> Token) -> Result<Token> {
         let _  = self.code.pop()?;
         Ok(constructor())
     }
 
-    pub fn next_token(&mut self) -> LexerResult {
+    pub fn next_token(&mut self) -> Result<Token> {
         match self.code.peek()? {
             c if c.is_alphabetic() => self.parse_identifier(),
             c if c.is_numeric() => self.parse_number(),
@@ -78,7 +122,7 @@ impl Lexer {
         }
     }
 
-    pub fn parse_string_literal(&mut self) -> LexerResult {
+    pub fn parse_string_literal(&mut self) -> Result<Token> {
         let start = self.code.pop()?;
         let mut string = vec![];
         while let Ok(c) = self.code.peek() && c != start {
@@ -100,7 +144,7 @@ impl Lexer {
         Ok(Token::Literal(Literal::String(string.iter().collect())))
     }
 
-    pub fn parse_with_predicate(&mut self, predicate: fn(char) -> bool, constructor: fn(String) -> Token) -> LexerResult {
+    pub fn parse_with_predicate(&mut self, predicate: fn(char) -> bool, constructor: fn(String) -> Token) -> Result<Token> {
         let mut token = vec![];
         while let Ok(c) = self.code.peek() && predicate(c) {
             token.push(self.code.pop()?);
@@ -109,7 +153,7 @@ impl Lexer {
         Ok(constructor(token.iter().collect()))
     }
 
-    pub fn parse_identifier(&mut self) -> LexerResult {
+    pub fn parse_identifier(&mut self) -> Result<Token> {
         let identifier = self.parse_with_predicate(|c| c.is_alphanumeric() || c == '_', Token::Identifier)?;
         Ok(if let Token::Identifier(keyword) = identifier {
             match keyword.as_ref() {
@@ -124,11 +168,11 @@ impl Lexer {
         })
     }
 
-    pub fn parse_number(&mut self) -> LexerResult {
+    pub fn parse_number(&mut self) -> Result<Token> {
         self.parse_with_predicate(|c| c.is_numeric() || c == '_', |s| Token::Literal(Literal::Number(s)))
     }
 
-    pub fn parse_whitespace(&mut self) -> LexerResult {
+    pub fn parse_whitespace(&mut self) -> Result<Token> {
         self.parse_with_predicate(|c| c.is_whitespace(), Token::Whitespace)
     }
 }

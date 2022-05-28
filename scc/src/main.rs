@@ -14,7 +14,9 @@ fn main() {
 
     let text = std::fs::read_to_string(args.input_file).expect("Could not read file");
 
-    let mut lexer = Lexer::new(text);
+    let mut lexer = StreamLexer::new(text);
 
-    println!("{:?}", lexer.lex());
+    while lexer.peek(None).is_ok() {
+        println!("{:?}", lexer.pop());
+    }
 }
